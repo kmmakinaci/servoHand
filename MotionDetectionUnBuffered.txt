@@ -1,0 +1,75 @@
+#include <Wire.h>
+#include "I2Cdev.h" //I2C kütüphanesi
+#include "MPU6050.h" //Mpu6050 kütüphanesi
+#include <SoftwareSerial.h>
+
+SoftwareSerial BTSerial(10, 11); // RX, TX
+
+#define TCAADDR 0x70
+
+/* Assign a unique ID to sensors at the same time */
+//MPU6050 accelgyro1 = MPU6050(1);
+//MPU6050 accelgyro2 = MPU6050(2);
+MPU6050 accelgyro;
+
+int16_t ax, ay, az; //ivme tanýmlama
+int16_t gx, gy, gz; //gyro tanýmlama
+
+int16_t ax2, ay2, az2; //ivme tanýmlama
+int16_t gx2, gy2, gz2; //gyro tanýmlama
+
+void tcaselect(uint8_t i) {
+  if (i > 7) return;
+ 
+  Wire.beginTransmission(TCAADDR);
+  Wire.write(1 << i);
+  Wire.endTransmission();  
+}
+
+
+void setup(void) 
+{
+  Wire.begin();
+  Serial.begin(38400);
+  Serial.println("MPU6050 Test"); Serial.println("");
+  
+  /* Initialise the 1st sensor */
+  tcaselect(2);
+  accelgyro.initialize();
+    /* There was a problem detecting the MPU6050 ... check your connections */
+    Serial.println("Test cihazý baðlantýlarý...");
+    Serial.println(accelgyro.testConnection() ? "MPU6050 baðlantý baþarýlý" : "MPU6050 baðlantýsý baþarýsýz");  
+
+  /* Initialise the 1st sensor */
+  tcaselect(7);
+  accelgyro.initialize();
+    /* There was a problem detecting the MPU6050 ... check your connections */
+    Serial.println("Test cihazý baðlantýlarý...");
+    Serial.println(accelgyro.testConnection() ? "MPU6050 baðlantý baþarýlý" : "MPU6050 baðlantýsý baþarýsýz"); 
+}
+
+void loop(void) 
+{
+  tcaselect(2);
+  accelgyro.getMotion6(&ax, &ay, &az, &gx, &gy, &gz); // ivme ve gyro deðerlerini okuma açýsal ivmeleri ve gyro deðerlerini ekrana yazdýrma
+  Serial.print("a/g 1 :\t");
+  Serial.print(ax); Serial.print("\t");
+  Serial.print(ay); Serial.print("\t");
+  Serial.print(az); Serial.print("\t");
+  Serial.print(gx); Serial.print("\t");
+  Serial.print(gy); Serial.print("\t");
+  Serial.println(gz);
+  delay(100);
+  
+  tcaselect(7);
+  accelgyro.getMotion6(&ax2, &ay2, &az2, &gx2, &gy2, &gz2); // ivme ve gyro deðerlerini okuma açýsal ivmeleri ve gyro deðerlerini ekrana yazdýrma
+  Serial.print("A/G 2:\t");
+  Serial.print(ax2); Serial.print("\t");
+  Serial.print(ay2); Serial.print("\t");
+  Serial.print(az2); Serial.print("\t");
+  Serial.print(gx2); Serial.print("\t");
+  Serial.print(gy2); Serial.print("\t");
+  Serial.println(gz2);
+  
+  delay(500);
+}

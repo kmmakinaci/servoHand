@@ -1,0 +1,147 @@
+#include <Wire.h>
+#include "I2Cdev.h" //I2C kütüphanesi
+#include "MPU6050.h" //Mpu6050 kütüphanesi
+#include <SoftwareSerial.h>
+
+SoftwareSerial BTSerial(10, 11); // RX, TX
+
+#define TCAADDR 0x70
+
+/* Assign a unique ID to sensors at the same time */
+//MPU6050 accelgyro1 = MPU6050(1);
+//MPU6050 accelgyro2 = MPU6050(2);
+MPU6050 accelgyro;
+
+int16_t ax, ay, az; //ivme tanýmlama
+int16_t gx, gy, gz; //gyro tanýmlama
+
+int16_t ax2, ay2, az2; //ivme tanýmlama
+int16_t gx2, gy2, gz2; //gyro tanýmlama
+
+int buffersize=5; 
+
+void tcaselect(uint8_t i) {
+  if (i > 7) return;
+ 
+  Wire.beginTransmission(TCAADDR);
+  Wire.write(1 << i);
+  Wire.endTransmission();  
+}
+
+
+void setup(void) 
+{
+  Wire.begin();
+  BTSerial.begin(9600);
+  BTSerial.println("MPU6050 Test"); Serial.println("");
+  
+  /* Initialise the 1st sensor */
+  tcaselect(2);
+  accelgyro.initialize();
+    /* There was a problem detecting the MPU6050 ... check your connections */
+    BTSerial.println("Test cihazý baðlantýlarý...");
+    BTSerial.println(accelgyro.testConnection() ? "MPU6050 baðlantý baþarýlý" : "MPU6050 baðlantýsý baþarýsýz");  
+  accelgyro.setXAccelOffset(713);
+  accelgyro.setYAccelOffset(98);
+  accelgyro.setZAccelOffset(17098);
+  accelgyro.setXGyroOffset(0);
+  accelgyro.setYGyroOffset(0);
+  accelgyro.setZGyroOffset(0);
+
+  /* Initialise the 1st sensor */
+  tcaselect(7);
+  accelgyro.initialize();
+    /* There was a problem detecting the MPU6050 ... check your connections */
+    BTSerial.println("Test cihazý baðlantýlarý...");
+    BTSerial.println(accelgyro.testConnection() ? "MPU6050 baðlantý baþarýlý" : "MPU6050 baðlantýsý baþarýsýz"); 
+  accelgyro.setXAccelOffset(713);
+  accelgyro.setYAccelOffset(98);
+  accelgyro.setZAccelOffset(17098);
+  accelgyro.setXGyroOffset(0);
+  accelgyro.setYGyroOffset(0);
+  accelgyro.setZGyroOffset(0);
+}
+
+void loop(void) 
+{
+  BTSerial.println("Accelerometer  X,  Y,  Z                                  ... Gyroscope X,  Y,  Z");
+  long i=0,buff_ax=0,buff_ay=0,buff_az=0,buff_gx=0,buff_gy=0,buff_gz=0;
+  
+  tcaselect(2);
+  while (i<(buffersize+1)){
+    // read raw accel/gyro measurements from device
+    accelgyro.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
+    
+    if (i>10 && i<=(buffersize+1)){ //First 100 measures are discarded
+      buff_ax=buff_ax+ax;
+      buff_ay=buff_ay+ay;
+      buff_az=buff_az+az;
+      buff_gx=buff_gx+gx;
+      buff_gy=buff_gy+gy;
+      buff_gz=buff_gz+gz;
+    }
+    if (i==(buffersize+1)){
+      ax=buff_ax/buffersize;
+      ay=buff_ay/buffersize;
+      az=buff_az/buffersize;
+      gx=buff_gx/buffersize;
+      gy=buff_gy/buffersize;
+      gz=buff_gz/buffersize;
+      BTSerial.print("ax=");
+      BTSerial.print(ax);
+      BTSerial.print("\tay=");
+      BTSerial.print(ay);
+      BTSerial.print("\taz=");
+      BTSerial.print(az);
+      BTSerial.print("\t\t\tgx=");
+      BTSerial.print(gx);
+      BTSerial.print("\tgy=");
+      BTSerial.print(gy);
+      BTSerial.print("\tgz=");
+      BTSerial.println(gz);
+    }
+    i++;
+    delay(2); //Needed so we don't get repeated measures
+  }
+  
+  tcaselect(7);
+  accelgyro.getMotion6(&ax2, &ay2, &az2, &gx2, &gy2, &gz2); // ivme ve gyro deðerlerini okuma açýsal ivmeleri ve gyro deðerlerini ekrana yazdýrma
+
+  while (i<(buffersize+1)){
+    // read raw accel/gyro measurements from device
+    accelgyro.getMotion6(&ax2, &ay2, &az2, &gx2, &gy2, &gz2);
+    
+    if (i>10 && i<=(buffersize+1)){ //First 100 measures are discarded
+      ax2=buff_ax+ax2;
+      ay2=buff_ay+ay2;
+      az2=buff_az+az2;
+      gx2=buff_gx+gx2;
+      gy2=buff_gy+gy2;
+      gz2=buff_gz+gz2;
+    }
+    if (i==(buffersize+1)){
+      ax=buff_ax/buffersize;
+      ay=buff_ay/buffersize;
+      az=buff_az/buffersize;
+      gx=buff_gx/buffersize;
+      gy=buff_gy/buffersize;
+      gz=buff_gz/buffersize;
+      BTSerial.print("ax2=");
+      BTSerial.print(ax2);
+      BTSerial.print("\tay2=");
+      BTSerial.print(ay2);
+      BTSerial.print("\taz2=");
+      BTSerial.print(az2);
+      BTSerial.print("\t\t\tgx2=");
+      BTSerial.print(gx2);
+      BTSerial.print("\tgy2=");
+      BTSerial.print(gy2);
+      BTSerial.print("\tgz2=");
+      BTSerial.println(gz2);
+    }
+    i++;
+    delay(2); //Needed so we don't get repeated measures
+  }
+  
+  delay(500);
+}
